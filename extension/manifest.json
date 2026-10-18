@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "YTM Control",
   "version": "0.2.0",
-  "description": "Atalhos e API local para o YouTube Music: curtir, adicionar a playlists e mais.",
+  "description": "Atalhos para o YouTube Music: curtir, adicionar a playlists e mais.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA03S80dNDmIjGaWmed3cSA1+Z9haA6KvxvzJx8sjRxHPAW6gxvWF+Xq0rlcKSVxFAtI0yVeqaouXFGezpNPJ67WFxQter0BPloIEzuQMhRoO48710YQGAQ129y3dWfVioKcOqvuWDZYDk1LI2FytNs1IzjBaRTMpfw8bBjwXfpEZ3lRj8jJoCVZvsbzoYxQhR6DHPfECaaubh3uqnWUDQDqa7aQcGvO54P1tDgiV7+1VTnR5Nx0+0bspE5xt4LhAoLZOOWYNvaPwSuyk1nmc/8DRjxOPPFJYUlqP4E1TnNswXK5Hx1yXDbsjP1fEPxFtrqkPAtu1VmB6gWsKT1cbDOwIDAQAB",
   "permissions": [
     "storage",
