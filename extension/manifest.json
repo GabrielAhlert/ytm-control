@@ -1,0 +1,75 @@
+{
+  "manifest_version": 3,
+  "name": "YTM Control",
+  "version": "0.1.0",
+  "description": "Atalhos e API local para o YouTube Music: curtir, adicionar a playlists e mais.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA03S80dNDmIjGaWmed3cSA1+Z9haA6KvxvzJx8sjRxHPAW6gxvWF+Xq0rlcKSVxFAtI0yVeqaouXFGezpNPJ67WFxQter0BPloIEzuQMhRoO48710YQGAQ129y3dWfVioKcOqvuWDZYDk1LI2FytNs1IzjBaRTMpfw8bBjwXfpEZ3lRj8jJoCVZvsbzoYxQhR6DHPfECaaubh3uqnWUDQDqa7aQcGvO54P1tDgiV7+1VTnR5Nx0+0bspE5xt4LhAoLZOOWYNvaPwSuyk1nmc/8DRjxOPPFJYUlqP4E1TnNswXK5Hx1yXDbsjP1fEPxFtrqkPAtu1VmB6gWsKT1cbDOwIDAQAB",
+  "permissions": [
+    "storage",
+    "nativeMessaging",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://music.youtube.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://music.youtube.com/*"
+      ],
+      "js": [
+        "page.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://music.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "action": {
+    "default_title": "YTM Control: configurar atalhos"
+  },
+  "commands": {
+    "like": {
+      "description": "Curtir / descurtir a música atual"
+    },
+    "dislike": {
+      "description": "Marcar \"não gostei\""
+    },
+    "pick-playlist": {
+      "description": "Abrir seletor de playlist"
+    },
+    "slot-1": {
+      "description": "Adicionar à playlist rápida 1"
+    },
+    "slot-2": {
+      "description": "Adicionar à playlist rápida 2"
+    },
+    "slot-3": {
+      "description": "Adicionar à playlist rápida 3"
+    },
+    "play-pause": {
+      "description": "Tocar / pausar"
+    },
+    "next": {
+      "description": "Próxima música"
+    },
+    "previous": {
+      "description": "Música anterior"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>YTM Control</title>
+  <style>
+    :root { color-scheme: light dark; --bg: #fafafa; --card: #fff; --fg: #1a1a1a; --muted: #666; --line: #e2e2e2; --accent: #e00; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #121212; --card: #1e1e1e; --fg: #eee; --muted: #999; --line: #333; } }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    h2 { font-size: 16px; margin: 0 0 4px; }
+    p.sub { color: var(--muted); margin: 0 0 12px; }
+    section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-top: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 6px 4px; vertical-align: middle; }
+    select, button, input { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
+    button { cursor: pointer; }
+    button.combo { min-width: 130px; font-family: ui-monospace, monospace; }
+    button.combo.rec { border-color: var(--accent); color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+    .muted { color: var(--muted); }
+    .ok { color: #2a8a2a; } .bad { color: #c33; }
+    code, pre { font-family: ui-monospace, monospace; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+    code { padding: 1px 5px; }
+    pre { padding: 10px 12px; overflow-x: auto; margin: 8px 0 0; }
+    .slots label { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+    .slots label span { width: 150px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>YTM Control</h1>
+  <p class="sub">Atalhos e API local para o YouTube Music.</p>
+
+  <section>
+    <h2>Playlists</h2>
+    <p class="sub">A lista vem da sua conta. Deixe uma música tocando no YouTube Music e clique em carregar.</p>
+    <div class="row">
+      <button id="load" class="primary">Carregar playlists</button>
+      <span id="load-status" class="muted"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Atalhos dentro do YouTube Music</h2>
+    <p class="sub">Funcionam com a aba do YouTube Music em foco. Clique no atalho e pressione a nova combinação.</p>
+    <table><tbody id="bindings"></tbody></table>
+    <div class="row"><button id="add-binding">+ Adicionar atalho</button></div>
+  </section>
+
+  <section class="slots">
+    <h2>Playlists rápidas</h2>
+    <p class="sub">Usadas pelos atalhos globais do Chrome ("Adicionar à playlist rápida N") e pelo comando <code>ytm slot N</code>.</p>
+    <div id="slots"></div>
+  </section>
+
+  <section>
+    <h2>Atalhos globais do Chrome</h2>
+    <p class="sub">Funcionam com o Chrome em segundo plano: defina as teclas e mude o escopo para <b>Global</b>.
+      No Wayland isso pode não funcionar; nesse caso, use a ponte abaixo com os atalhos do KDE.</p>
+    <div class="row"><button id="open-shortcuts">Abrir chrome://extensions/shortcuts</button></div>
+  </section>
+
+  <section>
+    <h2>Ponte com o sistema (comando <code>ytm</code>)</h2>
+    <p class="sub">Permite controlar o YouTube Music pelo terminal, por scripts e por atalhos globais do KDE.</p>
+    <div class="row"><span>Status:</span> <b id="bridge-status">…</b> <button id="reconnect">Reconectar</button></div>
+    <pre>ytm like                 # curtir / descurtir
+ytm add "Nome da playlist"
+ytm remove "Nome da playlist"
+ytm slot 1               # playlist rápida 1
+ytm pick                 # abre o seletor na página
+ytm status --json
+ytm --notify like        # com notificação do sistema (bom para atalhos do KDE)</pre>
+  </section>
+</main>
+<script src="options.js"></script>
+</body>
+</html>
