@@ -1,7 +1,6 @@
-// Service worker: encaminha ações (atalhos do Chrome, ponte nativa, página, opções)
+// Service worker: encaminha ações (atalhos do Chrome, página, opções)
 // para a aba do YouTube Music.
 const YTM_URL = 'https://music.youtube.com/*';
-const NATIVE_HOST = 'com.ytmcontrol.bridge';
 
 async function findTab(preferred) {
   if (preferred) return preferred;
@@ -40,9 +39,29 @@ async function runAction(action, args = {}, tabId) {
 
 // ---------- Atalhos do Chrome (chrome://extensions/shortcuts) ----------
 
-chrome.commands.onCommand.addListener((command) => {
-  const slot = /^slot-(\d)$/.exec(command);
-  runAction(slot ? 'slot' : command, slot ? { slot: slot[1] } : {}).catch((e) => console.warn('[YTM Control]', e.message));
+const SILENT = new Set(['play-pause', 'next', 'previous', 'pick-playlist']);
+
+// Com a aba do YouTube Music à vista, o aviso na página basta; senão, notificação do sistema.
+async function notify(tabId, message, error = false) {
+  if (tabId) {
+    const tab = await chrome.tabs.get(tabId);
+    const win = await chrome.windows.get(tab.windowId);
+    if (tab.active && win.focused) return;
+  }
+  chrome.notifications.create({ type: 'basic', iconUrl: 'icon.png', title: error ? 'YTM Control' : 'YouTube Music', message });
+}
+
+chrome.commands.onCommand.addListener(async (command) => {
+  const slot = /^slot-(\d+)$/.exec(command);
+  const action = slot ? 'slot' : command;
+  let tabId;
+  try {
+    tabId = await findTab();
+    const result = await runAction(action, slot ? { slot: slot[1] } : {}, tabId);
+    if (!SILENT.has(action) && result?.message) await notify(tabId, result.message);
+  } catch (e) {
+    await notify(tabId, `⚠️ ${e.message}`, true);
+  }
 });
 
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
@@ -60,33 +79,4 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     );
     return true;
   }
-  if (msg?.type === 'ytmc-bridge') {
-    if (msg.reconnect && !port) connectNative();
-    sendResponse({ connected: !!port, error: bridgeError });
-  }
 });
-
-// ---------- Ponte nativa (CLI `ytm` / atalhos do KDE) ----------
-
-let port = null;
-let bridgeError = null;
-
-function connectNative() {
-  port = chrome.runtime.connectNative(NATIVE_HOST);
-  bridgeError = null;
-  port.onMessage.addListener(async ({ id, action, args }) => {
-    try {
-      port?.postMessage({ id, ok: true, result: await runAction(action, args) });
-    } catch (e) {
-      port?.postMessage({ id, ok: false, error: e.message });
-    }
-  });
-  port.onDisconnect.addListener(() => {
-    bridgeError = chrome.runtime.lastError?.message || 'Ponte desconectada';
-    port = null;
-    // Ponte não instalada: não insiste. Caiu por outro motivo: tenta de novo.
-    if (!/not found|forbidden/i.test(bridgeError)) setTimeout(connectNative, 5000);
-  });
-}
-
-connectNative();

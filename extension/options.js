@@ -8,6 +8,7 @@ const ACTIONS = {
   next: 'Próxima',
   previous: 'Anterior',
 };
+const SLOT_COUNT = 10;
 const NEEDS_PLAYLIST = new Set(['add-to-playlist', 'remove-from-playlist']);
 const DEFAULT_BINDINGS = [
   { combo: 'Alt+L', action: 'like' },
@@ -95,8 +96,8 @@ function renderBindings() {
 
 function renderSlots() {
   $('slots').replaceChildren(
-    ...[0, 1, 2].map((i) =>
-      el('label', {}, el('span', { textContent: `Playlist rápida ${i + 1}` }), playlistSelect(slots[i], (p) => ((slots[i] = p), save()))),
+    ...Array.from({ length: SLOT_COUNT }, (_, i) =>
+      el('label', {}, el('span', { textContent: `${i + 1}` }), playlistSelect(slots[i], (p) => ((slots[i] = p), save()))),
     ),
   );
 }
@@ -115,19 +116,9 @@ async function loadPlaylists() {
   renderSlots();
 }
 
-async function refreshBridge(reconnect = false) {
-  const s = await chrome.runtime.sendMessage({ type: 'ytmc-bridge', reconnect });
-  const out = $('bridge-status');
-  out.className = s.connected ? 'ok' : 'bad';
-  out.textContent = s.connected
-    ? 'conectada'
-    : /not found/i.test(s.error || '') ? 'não instalada (rode o install.sh)' : s.error || 'desconectada';
-}
-
 $('load').addEventListener('click', loadPlaylists);
 $('add-binding').addEventListener('click', () => (bindings.push({ combo: '', action: 'like' }), renderBindings()));
 $('open-shortcuts').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
-$('reconnect').addEventListener('click', () => (refreshBridge(true), setTimeout(refreshBridge, 1000)));
 
 (async () => {
   const stored = await chrome.storage.sync.get(['bindings', 'slots']);
@@ -137,5 +128,4 @@ $('reconnect').addEventListener('click', () => (refreshBridge(true), setTimeout(
   if (playlists.length) $('load-status').textContent = `${playlists.length} playlists (salvas)`;
   renderBindings();
   renderSlots();
-  refreshBridge();
 })();

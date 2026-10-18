@@ -1,51 +1,31 @@
 #!/usr/bin/env bash
-# Instala a YTM Control: copia a extensão e o comando `ytm` para ~/.local/share/ytm-control
-# e registra a ponte de native messaging no Chrome. Use `./install.sh --uninstall` para remover.
+# Copia a extensão para ~/.local/share/ytm-control/extension (pasta carregada no Chrome).
+# Assim o Chrome não depende de onde este repositório está. `./install.sh --uninstall` remove.
 set -euo pipefail
 
-EXT_ID="nkeogbpipkegbbihonkimhiphokagdld"   # fixo, definido pela "key" do manifest.json
-HOST_NAME="com.ytmcontrol.bridge"
 SRC="$(cd "$(dirname "$0")" && pwd)"
 DEST="$HOME/.local/share/ytm-control"
-BIN="$HOME/.local/bin/ytm"
-HOST_DIRS=("$HOME/.config/google-chrome/NativeMessagingHosts" "$HOME/.config/chromium/NativeMessagingHosts")
+
+# Restos da versão 0.1 (ponte nativa + comando ytm).
+rm -f "$HOME/.local/bin/ytm" "$DEST/ytm" \
+  "$HOME/.config/google-chrome/NativeMessagingHosts/com.ytmcontrol.bridge.json" \
+  "$HOME/.config/chromium/NativeMessagingHosts/com.ytmcontrol.bridge.json" \
+  "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ytm-control.sock"
 
 if [[ "${1:-}" == "--uninstall" ]]; then
-  for d in "${HOST_DIRS[@]}"; do rm -f "$d/$HOST_NAME.json"; done
-  rm -f "$BIN"
   rm -rf "$DEST"
   echo "Removido. Tire a extensão em chrome://extensions."
   exit 0
 fi
 
-mkdir -p "$DEST" "$(dirname "$BIN")"
+mkdir -p "$DEST"
 rm -rf "$DEST/extension"
 cp -r "$SRC/extension" "$DEST/extension"
-install -m 755 "$SRC/native/ytm" "$DEST/ytm"
-ln -sf "$DEST/ytm" "$BIN"
-
-for d in "${HOST_DIRS[@]}"; do
-  [[ -d "$(dirname "$d")" ]] || continue
-  mkdir -p "$d"
-  cat > "$d/$HOST_NAME.json" <<EOF
-{
-  "name": "$HOST_NAME",
-  "description": "Ponte da extensão YTM Control",
-  "path": "$DEST/ytm",
-  "type": "stdio",
-  "allowed_origins": ["chrome-extension://$EXT_ID/"]
-}
-EOF
-done
 
 cat <<EOF
-Instalado.
+Extensão copiada para $DEST/extension
 
-1. Abra chrome://extensions, ative o "Modo do desenvolvedor" e clique em
-   "Carregar sem compactação", escolhendo a pasta:
-     $DEST/extension
-2. Recarregue a aba do YouTube Music.
-3. Teste no terminal:  ytm status
-
-Se você mudar algo no código, rode ./install.sh de novo e clique em "Recarregar" na extensão.
+Primeira vez: em chrome://extensions, ative o "Modo do desenvolvedor", clique em
+"Carregar sem compactação" e escolha essa pasta.
+Atualização: clique em ↻ (recarregar) no card da YTM Control e recarregue a aba do YouTube Music.
 EOF

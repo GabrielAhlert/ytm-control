@@ -21,18 +21,19 @@
     button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
     .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
     .muted { color: var(--muted); }
-    .ok { color: #2a8a2a; } .bad { color: #c33; }
     code, pre { font-family: ui-monospace, monospace; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
     code { padding: 1px 5px; }
     pre { padding: 10px 12px; overflow-x: auto; margin: 8px 0 0; }
-    .slots label { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
-    .slots label span { width: 150px; }
+    #slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px 24px; margin-top: 8px; }
+    .slots label { display: flex; gap: 10px; align-items: center; }
+    .slots label span { width: 28px; color: var(--muted); text-align: right; }
+    .slots select { flex: 1; min-width: 0; }
   </style>
 </head>
 <body>
 <main>
   <h1>YTM Control</h1>
-  <p class="sub">Atalhos e API local para o YouTube Music.</p>
+  <p class="sub">Atalhos para o YouTube Music: curtir, playlists e mais.</p>
 
   <section>
     <h2>Playlists</h2>
@@ -52,28 +53,17 @@
 
   <section class="slots">
     <h2>Playlists rápidas</h2>
-    <p class="sub">Usadas pelos atalhos globais do Chrome ("Adicionar à playlist rápida N") e pelo comando <code>ytm slot N</code>.</p>
+    <p class="sub">Usadas pelos atalhos "Adicionar à playlist rápida 1…10" (veja abaixo).</p>
     <div id="slots"></div>
   </section>
 
   <section>
-    <h2>Atalhos globais do Chrome</h2>
-    <p class="sub">Funcionam com o Chrome em segundo plano: defina as teclas e mude o escopo para <b>Global</b>.
-      No Wayland isso pode não funcionar; nesse caso, use a ponte abaixo com os atalhos do KDE.</p>
+    <h2>Atalhos globais</h2>
+    <p class="sub">Funcionam com o Chrome em segundo plano. Em <code>chrome://extensions/shortcuts</code>, mude o escopo
+      do comando para <b>Global</b>; no KDE (Wayland) a tecla é escolhida em
+      <b>Configurações do Sistema → Teclado → Atalhos → Google Chrome</b>.
+      Quando o YouTube Music não está à vista, o resultado aparece como notificação do sistema.</p>
     <div class="row"><button id="open-shortcuts">Abrir chrome://extensions/shortcuts</button></div>
-  </section>
-
-  <section>
-    <h2>Ponte com o sistema (comando <code>ytm</code>)</h2>
-    <p class="sub">Permite controlar o YouTube Music pelo terminal, por scripts e por atalhos globais do KDE.</p>
-    <div class="row"><span>Status:</span> <b id="bridge-status">…</b> <button id="reconnect">Reconectar</button></div>
-    <pre>ytm like                 # curtir / descurtir
-ytm add "Nome da playlist"
-ytm remove "Nome da playlist"
-ytm slot 1               # playlist rápida 1
-ytm pick                 # abre o seletor na página
-ytm status --json
-ytm --notify like        # com notificação do sistema (bom para atalhos do KDE)</pre>
   </section>
 </main>
 <script src="options.js"></script>
