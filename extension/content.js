@@ -1,8 +1,10 @@
 // Content script (mundo isolado): atalhos de teclado na página, aviso na tela,
 // seletor de playlist e ponte entre o background e o page.js.
 (() => {
-  if (window.__ytmControlContent) return;
-  window.__ytmControlContent = true;
+  // Depois que a extensão é recarregada, a cópia antiga deste script fica "órfã" (sem acesso ao
+  // chrome.*) mas continua no mesmo mundo isolado. Só aborta se a cópia existente ainda estiver viva.
+  if (window.__ytmControlAlive?.()) return;
+  window.__ytmControlAlive = () => !!chrome.runtime?.id;
 
   // ---------- Conversa com o page.js ----------
 
@@ -28,7 +30,7 @@
     });
   }
 
-  // Ações pedidas pelo background (atalhos do Chrome, ponte nativa, atalhos desta página).
+  // Ações pedidas pelo background (atalhos do Chrome e atalhos desta página).
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.type !== 'ytmc-action') return;
     (async () => {
@@ -75,7 +77,8 @@
 
   const isTyping = (el) => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 
-  window.addEventListener('keydown', (e) => {
+  window.addEventListener('keydown', function onKey(e) {
+    if (!chrome.runtime?.id) return window.removeEventListener('keydown', onKey, true); // cópia órfã
     if (e.repeat || pickerOpen()) return;
     const combo = comboFromEvent(e);
     const binding = combo && bindings.find((b) => b.combo === combo);
@@ -89,6 +92,7 @@
 
   // ---------- Interface (aviso + seletor) ----------
 
+  document.getElementById('ytm-control-ui')?.remove(); // interface de uma cópia órfã
   const host = document.createElement('div');
   host.id = 'ytm-control-ui';
   const shadow = host.attachShadow({ mode: 'closed' });
