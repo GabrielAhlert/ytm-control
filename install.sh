@@ -12,7 +12,13 @@ rm -f "$HOME/.local/bin/ytm" "$DEST/ytm" \
   "$HOME/.config/chromium/NativeMessagingHosts/com.ytmcontrol.bridge.json" \
   "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ytm-control.sock"
 
+AUTOSTART="$HOME/.config/autostart/ytm-control-kde-shortcuts.desktop"
+FIXER="$DEST/kde-reactivate-shortcuts.py"
+stop_fixer() { pkill -f "$FIXER" 2>/dev/null || true; }
+
 if [[ "${1:-}" == "--uninstall" ]]; then
+  stop_fixer
+  rm -f "$AUTOSTART"
   rm -rf "$DEST"
   echo "Removido. Tire a extensão em chrome://extensions."
   exit 0
@@ -21,6 +27,25 @@ fi
 mkdir -p "$DEST"
 rm -rf "$DEST/extension"
 cp -r "$SRC/extension" "$DEST/extension"
+
+# KDE Plasma >= 6.7.4 deixa os atalhos globais do Chrome inativos depois que ele reinicia
+# (veja linux/kde-reactivate-shortcuts.py). Instala um processo que os reativa, iniciado no login.
+if [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* ]]; then
+  stop_fixer
+  install -m 755 "$SRC/linux/kde-reactivate-shortcuts.py" "$FIXER"
+  mkdir -p "$(dirname "$AUTOSTART")"
+  cat > "$AUTOSTART" <<EOF
+[Desktop Entry]
+Type=Application
+Name=YTM Control: atalhos globais no KDE
+Comment=Reativa os atalhos globais do Chrome que o KDE deixa inativos
+Exec=/usr/bin/python3 -I $FIXER
+NoDisplay=true
+X-KDE-autostart-phase=2
+EOF
+  setsid -f /usr/bin/python3 -I "$FIXER" >/dev/null 2>&1 < /dev/null
+  echo "KDE: reativação dos atalhos globais instalada ($AUTOSTART)."
+fi
 
 cat <<EOF
 Extensão copiada para $DEST/extension

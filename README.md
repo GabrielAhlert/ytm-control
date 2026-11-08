@@ -34,7 +34,8 @@ Works on Chrome and other Chromium-based browsers (Brave, Edge, Vivaldi…) on a
 
 **Linux helper (optional):** `./install.sh` copies the extension to `~/.local/share/ytm-control/extension`,
 so Chrome doesn't depend on where you keep the repo. Load that folder instead, and after a `git pull`
-run `./install.sh` again and hit ↻ on the extension card. `./install.sh --uninstall` removes it.
+run `./install.sh` again and hit ↻ on the extension card. On KDE it also installs the global-shortcut fix
+described under [Global shortcuts](#global-shortcuts). `./install.sh --uninstall` removes everything.
 
 ## Setup
 
@@ -56,6 +57,14 @@ on its own.)
 
 Pick combos that don't clash with other apps — a global `Ctrl+L` will steal the address bar shortcut everywhere.
 `Meta+Shift+<key>` is usually free.
+
+**KDE Plasma 6.7.4 or newer:** global shortcuts stop working after Chrome (or the PC) restarts — they only fire
+while Chrome is focused. Since xdg-desktop-portal-kde 6.7.4 a shortcut is only active after the app calls
+`BindShortcuts` in the current session ([KDE bug 523063](https://bugs.kde.org/show_bug.cgi?id=523063)), and Chrome
+skips that call when its shortcuts are already saved. `./install.sh` works around it on KDE: it installs
+`linux/kde-reactivate-shortcuts.py` as an autostart entry, which marks Chrome's saved shortcuts as active again
+whenever Chrome opens (keys are not changed). To run it by hand once:
+`python3 linux/kde-reactivate-shortcuts.py --once`.
 
 ## How it works
 
