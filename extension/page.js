@@ -122,6 +122,8 @@
 
   // ---------- Playlists ----------
 
+  // O YouTube Music parou de mandar `containsSelectedVideos` (nov/2026); quando não vem, `contains`
+  // fica false e quem descobre se a música já está na playlist é o próprio edit_playlist.
   async function getPlaylists(videoId) {
     const data = await innertube('playlist/get_add_to_playlist', { videoIds: [videoId], excludeWatchLater: true });
     return collect(data, 'playlistAddToOptionRenderer').map((r) => ({
@@ -144,9 +146,15 @@
     throw new Error(`Playlist "${query}" não encontrada`);
   }
 
+  // Devolve true se editou. Com DEDUPE_OPTION_CHECK, música repetida volta como STATUS_FAILED
+  // com um aviso "Adicionar mesmo assim" (um playlistEditEndpoint com DEDUPE_OPTION_SKIP): isso vira false.
   async function editPlaylist(playlistId, action) {
     const r = await innertube('browse/edit_playlist', { playlistId, actions: [action] });
-    if (r.status && r.status !== 'STATUS_SUCCEEDED') throw new Error(`Falha ao editar a playlist (${r.status})`);
+    if (!r.status || r.status === 'STATUS_SUCCEEDED') return true;
+    const retry = collect(r.actions, 'playlistEditEndpoint')[0]?.actions?.[0];
+    if (action.action === 'ACTION_ADD_VIDEO' && retry?.dedupeOption === 'DEDUPE_OPTION_SKIP') return false;
+    const why = collect(r.actions, 'responseText').map(text).find(Boolean);
+    throw new Error(`Falha ao editar a playlist (${why || r.status})`);
   }
 
   // ---------- Ações ----------
@@ -183,15 +191,17 @@
     'add-to-playlist': async ({ playlist }) => {
       const song = requireSong();
       const pl = resolvePlaylist(playlist, await getPlaylists(song.videoId));
-      if (pl.contains) return { ...song, playlist: pl.title, already: true, message: `Já está em "${pl.title}"` };
-      await editPlaylist(pl.id, { action: 'ACTION_ADD_VIDEO', addedVideoId: song.videoId, dedupeOption: 'DEDUPE_OPTION_SKIP' });
+      const already = { ...song, playlist: pl.title, already: true, message: `Já está em "${pl.title}"` };
+      if (pl.contains) return already;
+      const added = await editPlaylist(pl.id, { action: 'ACTION_ADD_VIDEO', addedVideoId: song.videoId, dedupeOption: 'DEDUPE_OPTION_CHECK' });
+      if (!added) return already;
       return { ...song, playlist: pl.title, message: `➕ ${song.title ?? 'Música'} → "${pl.title}"` };
     },
 
+    // Sem `contains` confiável, sempre manda a remoção (o YouTube aceita mesmo se a música não estiver lá).
     'remove-from-playlist': async ({ playlist }) => {
       const song = requireSong();
       const pl = resolvePlaylist(playlist, await getPlaylists(song.videoId));
-      if (!pl.contains) return { ...song, playlist: pl.title, message: `Não está em "${pl.title}"` };
       await editPlaylist(pl.id, { action: 'ACTION_REMOVE_VIDEO_BY_VIDEO_ID', removedVideoId: song.videoId });
       return { ...song, playlist: pl.title, message: `➖ ${song.title ?? 'Música'} removida de "${pl.title}"` };
     },
